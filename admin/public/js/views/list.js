@@ -268,6 +268,37 @@ jQuery(function($) {
 	});
 	
 	/** List Controls */
+	var deleteAll = $('<div class="pull-right" style="margin-right: 10px"><button class="delete-all btn btn-default">Delete All</button></div>')
+	$('.list-columns-dropdown').parent().append(deleteAll);
+
+	$('.delete-all').on('click', function(e) {
+		e.preventDefault();
+		if (!confirm('Are you sure you want to delete all items ' + Keystone.list.singular.toLowerCase() + '?')) {
+			return false;
+		}
+
+		$.ajax('/keystone/api/' + Keystone.list.path + '/delete', {
+			data: Keystone.csrf({
+				id: 'all'
+			}),
+			dataType: 'json',
+			type: 'POST'
+		}).done(function(rtn){
+			window.location = window.location;
+		}).error(function(err) {
+			if (err && err.responseJSON) {
+				err = err.responseJSON;
+			}
+			var errorMessage = 'There was an error deleting all item in the ' + Keystone.list.toLowerCase();
+			var errorDetail = err ? err.err || err.key : '';
+			if (errorDetail) {
+				errorMessage += '\n\n' + errorDetail;
+			}
+			alert(errorMessage);
+			$row.removeClass('delete-inprogress');
+		});
+	});
+
 	$('table.items-list tbody').on('mouseenter mouseleave', 'tr a.control-delete', function(e) {
 		if (e.type == 'mouseenter') {// eslint-disable-line eqeqeq
 			$(this).closest('tr').addClass('delete-hover');

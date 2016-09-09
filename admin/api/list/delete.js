@@ -25,21 +25,43 @@ module.exports = function(req, res) {
 	}
 	var deletedCount = 0;
 	var deletedIds = [];
-	req.list.model.find().where('_id').in(ids).exec(function (err, results) {
-		if (err) return res.apiError('database error', err);
-		async.forEachLimit(results, 10, function(item, next) {
-			item.remove(function (err) {
-				if (err) return next(err);
-				deletedCount++;
-				deletedIds.push(item.id);
-				next();
+
+	if (req.body.id === 'all') {
+		req.list.model.find().exec(function (err, results) {
+			if (err) return res.apiError('database error', err);
+			async.forEach(results, function(item, next) {
+				item.remove(function (err) {
+					if (err) return next(err);
+					deletedCount++;
+					deletedIds.push(item.id);
+				});
+					next();
+			}, function() {
+				return res.json({
+					success: true,
+					ids: deletedIds,
+					count: deletedCount
+				});
 			});
-		}, function() {
-			return res.json({
-				success: true,
-				ids: deletedIds,
-				count: deletedCount
+			
+		});
+	} else {
+		req.list.model.find().where('_id').in(ids).exec(function (err, results) {
+			if (err) return res.apiError('database error', err);
+			async.forEachLimit(results, 10, function(item, next) {
+				item.remove(function (err) {
+					if (err) return next(err);
+					deletedCount++;
+					deletedIds.push(item.id);
+					next();
+				});
+			}, function() {
+				return res.json({
+					success: true,
+					ids: deletedIds,
+					count: deletedCount
+				});
 			});
 		});
-	});
+	}
 };
